@@ -1,0 +1,29 @@
+---
+- name: "Download & unzip Apache Kafka (binary)"
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install Java + tools
+      apt:
+        update_cache: true
+        name:
+          - openjdk-17-jdk-headless
+          - curl
+        state: present
+
+    - name: Create ApacheKafka directory
+      file:
+        path: /home/mila/ApacheKafka
+        state: directory
+        owner: mila
+        group: mila
+
+    - name: Download & unzip Kafka binary (not src)
+      unarchive:
+        src: "https://archive.apache.org/dist/kafka/3.7.0/kafka_2.13-3.7.0.tgz"
+        dest: /home/mila/ApacheKafka
+        remote_src: true
+        extra_opts: ["--strip-components=1"]
+        owner: mila
+        group: mila

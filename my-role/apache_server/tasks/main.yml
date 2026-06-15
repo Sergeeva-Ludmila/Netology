@@ -1,0 +1,48 @@
+---
+- name: Install Apache web server
+  apt:
+    name: "{{ web_server_package }}"
+    state: present
+  become: true
+
+- name: Enable and start Apache service
+  service:
+    name: "{{ web_server_package }}"
+    state: started
+    enabled: true
+  become: true
+
+- name: Open port 80 in UFW
+  ufw:
+    rule: allow
+    port: "{{ default_web_port }}"
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Configure index.html with system info
+  template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart apache
+
+- name: Wait for Apache to start
+  wait_for:
+    port: "{{ default_web_port }}"
+    delay: 5
+  become: false
+
+- name: Check website availability
+  uri:
+    url: "http://{{ ansible_facts.default_ipv4.address }}:{{ default_web_port }}/"
+    status_code: 200
+  register: website_check
+  ignore_errors: true
+  become: false
+
+- name: Display website check result
+  debug:
+    msg: "Website is accessible: {{ website_check.status == 200 }}"
+  when: website_check is succeeded

@@ -1,0 +1,61 @@
+---
+- name: Обновить MOTD с мотивационным сообщением
+  hosts: all
+  become: true
+  gather_facts: true  # Собираем факты о системе
+
+  vars:
+    motd_message: |
+      Добро пожаловать, системный администратор!
+      Хост: {{ inventory_hostname }}
+      IP-адрес: {{ ansible_default_ipv4.address | default('Не определён') }}
+      Отличного настроения и продуктивной работы!
+
+      Да пребудет с тобой Sudo!
+      Но помни: rm -Rf без проверки и упавший сервер — путь к ночным звонкам.
+      Не забывай про обновления!
+      Сейчас сервер в норме и все работает!Отличной смены!
+
+  tasks:
+    - name: Создать резервную копию текущего MOTD (если существует)
+      copy:
+        src: /etc/motd
+        dest: "/etc/motd.backup.{{ ansible_date_time.iso8601 }}"
+        remote_src: true
+      when: >
+        ansible_facts['os_family'] is defined and
+        (ansible_facts['os_family'] == "RedHat" or
+         ansible_facts['os_family'] == "Debian")
+      ignore_errors: true  # Продолжаем, если файла нет
+
+    - name: Убедиться, что файл /etc/motd существует
+      file:
+        path: /etc/motd
+        state: touch
+        mode: '0644'
+        owner: root
+        group: root
+
+    - name: Записать новое MOTD в /etc/motd
+      copy:
+        content: "{{ motd_message }}"
+        dest: /etc/motd
+        mode: '0644'
+        owner: root
+        group: root
+      register: motd_result
+
+    - name: Сообщить об успешном обновлении MOTD
+      debug:
+        msg: "MOTD успешно обновлён на {{ inventory_hostname }}"
+      when: motd_result is success
+
+    - name: Проверить содержимое нового MOTD
+      command: cat /etc/motd
+      register: check_motd
+      changed_when: false
+
+    - name: Показать новое MOTD для проверки
+      debug:
+        var: check_motd.stdout
+      when: check_motd is succeeded

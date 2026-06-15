@@ -1,0 +1,21 @@
+---
+- name: Установить и настроить tuned
+  hosts: all
+  become: true
+  tasks:
+    - name: Установить пакет tuned из стандартного репозитория
+      ansible.builtin.package:
+        name: tuned
+        state: present
+
+    - name: Запустить службу tuned
+      ansible.builtin.systemd:
+        name: tuned
+        state: started
+        daemon_reload: true
+
+    - name: Включить tuned в автозагрузку
+      ansible.builtin.systemd:
+        name: tuned
+        enabled: true
+        daemon_reload: true

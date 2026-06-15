@@ -1,0 +1,9 @@
+[server]
+server-1 ansible_host=10.0.2.15 ansible_user=mila ansible_ssh_private_key_file=~/.ssh/id_ed25519
+server-2 ansible_host=10.0.3.15 ansible_user=mila ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+[server:vars]
+ansible_connection=ssh
+ansible_python_interpreter=/usr/bin/python3
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
